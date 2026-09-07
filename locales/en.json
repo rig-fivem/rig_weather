@@ -1,0 +1,29 @@
+{
+    "debug": {
+        "admin_weather_changed": "%s changed weather to %s in bucket %d",
+        "admin_time_changed": "%s changed time to %02d:%02d in bucket %d",
+        "admin_season_changed": "%s changed season to %s in bucket %d",
+        "admin_freeze_toggled": "%s toggled weather freeze (%s) in bucket %d",
+        "admin_dynamic_toggled": "%s toggled dynamic %s (%s) in bucket %d"
+    },
+    
+    "commands": {
+        "no_permission": "You don't have permission to use this command",
+        "bucket_not_found": "Bucket not found",
+        "weather_usage": "Usage: /weather:setweather <type> [bucket_id]",
+        "weather_set": "Weather set to %s for bucket %d",
+        "time_usage": "Usage: /weather:settime <hour> <minute> [bucket_id] (hour: 0-23, minute: 0-59)",
+        "time_set": "Time set to %02d:%02d for bucket %d",
+        "season_usage": "Usage: /weather:setseason <winter|spring|summer|autumn> [bucket_id]",
+        "season_set": "Season set to %s for bucket %d",
+        "rain_usage": "Usage: /weather:setrain <0.0-1.0> [bucket]",
+        "rain_set": "Rain set to %.2f for bucket %d",
+        "snow_usage": "Usage: /weather:setsnow <0.0-1.0> [bucket]",
+        "snow_set": "Snow set to %.2f for bucket %d",
+        "weather_frozen": "Weather %s for bucket %d",
+        "dynamic_usage": "Usage: /weather:dynamic <weather|time> <on|off> [bucket_id]",
+        "dynamic_toggled": "Dynamic %s turned %s for bucket %d",
+        "wind_usage": "Usage: /weather:setwind <speed> [bucket]",
+        "wind_set": "Wind speed set to %.2f for bucket %d"
+    }
+}
