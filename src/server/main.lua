@@ -281,15 +281,15 @@ CreateThread(function()
                     env_data.season = current_season
                 end
 
-                if not env_data.freeze_weather and math.random(1, 100) <= WEATHER_CONFIG.weather_change_probability then
-                    local allowed = WEATHER_CONFIG.seasonal_weather[current_season]
+                if not env_data.freeze_weather and math.random(1, 100) <= _settings.weather_change_probability then
+                    local allowed = _settings.seasonal_weather[current_season]
                     env_data.weather = allowed[math.random(1, #allowed)]
                     _utils.update_weather_effects(env_data, env_data.weather)
                     log("info", ("Weather changed to %s in bucket '%s'"):format(env_data.weather, bucket_config.label))
                 end
 
                 if not env_data.freeze_weather then
-                    local wind_change = WEATHER_CONFIG.wind_direction_change
+                    local wind_change = _settings.wind_direction_change
                     env_data.wind_direction = (env_data.wind_direction + math.random(wind_change.min, wind_change.max)) % 360
                 end
             end

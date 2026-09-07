@@ -19,7 +19,7 @@ local _utils = require("src.server.modules.utils")
 --- @section Setters
 
 exports.rig:register_command({
-    name = "weather:setweather",
+    name = "rig:setweather",
     ace = { "rig.dev", "rig.admin" },
     help = "Set weather for a bucket",
     params = {
@@ -66,7 +66,7 @@ exports.rig:register_command({
 })
 
 exports.rig:register_command({
-    name = "weather:settime",
+    name = "rig:settime",
     ace = { "rig.dev", "rig.admin" },
     help = "Set time for a bucket",
     params = {
@@ -115,7 +115,7 @@ exports.rig:register_command({
 })
 
 exports.rig:register_command({
-    name = "weather:setseason",
+    name = "rig:setseason",
     ace = { "rig.dev", "rig.admin" },
     help = "Set season for a bucket",
     params = {
@@ -159,7 +159,7 @@ exports.rig:register_command({
 })
 
 exports.rig:register_command({
-    name = "weather:setrain",
+    name = "rig:setrain",
     ace = { "rig.dev", "rig.admin" },
     help = "Set rain level (0.0-1.0)",
     params = {
@@ -203,7 +203,7 @@ exports.rig:register_command({
 })
 
 exports.rig:register_command({
-    name = "weather:setsnow",
+    name = "rig:setsnow",
     ace = { "rig.dev", "rig.admin" },
     help = "Set snow level (0.0-1.0)",
     params = {
@@ -217,7 +217,7 @@ exports.rig:register_command({
         if not level or level < 0 or level > 1 then
             exports.rig:notify(source, {
                 header = "Weather",
-                message = "Usage: /weather:setsnow <0.0-1.0> [bucket]",
+                message = "Usage: /rig:setsnow <0.0-1.0> [bucket]",
                 type = "inform",
                 icon = "fa-solid fa-circle-info"
             })
@@ -247,7 +247,7 @@ exports.rig:register_command({
 })
 
 exports.rig:register_command({
-    name = "weather:setwind",
+    name = "rig:setwind",
     ace = { "rig.dev", "rig.admin" },
     help = "Set wind speed",
     params = {
@@ -293,7 +293,7 @@ exports.rig:register_command({
 --- @section Toggles
 
 exports.rig:register_command({
-    name = "weather:freeze",
+    name = "rig:freeze",
     ace = { "rig.dev", "rig.admin" },
     help = "Freeze/unfreeze weather for a bucket",
     params = {
@@ -327,7 +327,7 @@ exports.rig:register_command({
 })
 
 exports.rig:register_command({
-    name = "weather:dynamic",
+    name = "rig:dynamic",
     ace = { "rig.dev", "rig.admin" },
     help = "Toggle dynamic weather or time",
     params = {
