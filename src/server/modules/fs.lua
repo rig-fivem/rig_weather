@@ -32,11 +32,11 @@ function m.save_bucket_state(bucket_id)
 
     local file_content = "return {\n"
     file_content = file_content .. string.format("    weather = %q,\n", env_data.weather)
-    file_content = file_content .. string.format("    hour = %d,\n", env_data.hour)
-    file_content = file_content .. string.format("    minute = %d,\n", env_data.minute)
-    file_content = file_content .. string.format("    day = %d,\n", env_data.day)
-    file_content = file_content .. string.format("    month = %d,\n", env_data.month)
-    file_content = file_content .. string.format("    year = %d,\n", env_data.year)
+    file_content = file_content .. string.format("    hour = %d,\n", math.floor(env_data.hour or 0))
+    file_content = file_content .. string.format("    minute = %d,\n", math.floor(env_data.minute or 0))
+    file_content = file_content .. string.format("    day = %d,\n", math.floor(env_data.day or 0))
+    file_content = file_content .. string.format("    month = %d,\n", math.floor(env_data.month or 0))
+    file_content = file_content .. string.format("    year = %d,\n", math.floor(env_data.year or 0))
     file_content = file_content .. string.format("    season = %q,\n", env_data.season)
     file_content = file_content .. "}\n"
 

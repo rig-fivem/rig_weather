@@ -1,6 +1,6 @@
 return {
     weather = "RAIN",
-    hour = 17,
+    hour = 21,
     minute = 4,
     day = 9,
     month = 5,

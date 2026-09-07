@@ -17,7 +17,7 @@ RegisterNetEvent("rig_weather:client:set_environment", function(weather_data)
     if not weather_data then return end
 
     SetWeatherTypeOvertimePersist(weather_data.weather, weather_data.transition_time)
-    NetworkOverrideClockTime(weather_data.hour, daweather_datata.minute, 0)
+    NetworkOverrideClockTime(weather_data.hour, weather_data.minute, 0)
     SetRainLevel(weather_data.rain_level)
     SetSnowLevel(weather_data.snow_level)
     SetWindSpeed(weather_data.wind_speed)
