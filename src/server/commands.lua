@@ -15,16 +15,31 @@ License: https://github.com/rig-fivem/rig_weather/blob/main/LICENSE
 
 local _buckets = require("src.server.modules.buckets")
 local _utils = require("src.server.modules.utils")
+local _settings = require("configs.settings")
+
+--- @section Helpers
+
+local function supports_rain(weather)
+    local fx = _settings.weather_effects[weather]
+    if not fx then return false end
+    return (fx.rain_min and fx.rain_min > 0) or (fx.rain and fx.rain > 0)
+end
+
+local function supports_snow(weather)
+    local fx = _settings.weather_effects[weather]
+    if not fx then return false end
+    return (fx.snow_min and fx.snow_min > 0) or (fx.snow and fx.snow > 0)
+end
 
 --- @section Setters
 
 exports.rig:register_command({
     name = "rig:setweather",
     ace = { "rig.dev", "rig.admin" },
-    help = "Set weather for a bucket",
+    help = "Set the active weather type for a routing bucket",
     params = {
-        { name = "type", help = "Weather type" },
-        { name = "bucket", help = "Bucket ID (optional)" }
+        { name = "type", help = "Weather type (e.g. clear, rain, xmas, extrasunny)" },
+        { name = "bucket", help = "(Optional) Routing bucket ID. Defaults to 0." }
     },
     handler = function(source, args, raw)
         local weather_type = args[1]
@@ -40,6 +55,17 @@ exports.rig:register_command({
             return
         end
 
+        local upper_weather = weather_type:upper()
+        if not _settings.weather_effects[upper_weather] then
+            exports.rig:notify(source, {
+                header = "Weather",
+                message = locale("commands.invalid_weather_type", upper_weather),
+                type = "error",
+                icon = "fa-solid fa-times-circle"
+            })
+            return
+        end
+
         if not core.bucket_environments[bucket_id] then
             exports.rig:notify(source, {
                 header = "Weather",
@@ -50,29 +76,29 @@ exports.rig:register_command({
             return
         end
 
-        core.bucket_environments[bucket_id].weather = weather_type:upper()
-        _utils.update_weather_effects(core.bucket_environments[bucket_id], weather_type:upper())
+        core.bucket_environments[bucket_id].weather = upper_weather
+        _utils.update_weather_effects(core.bucket_environments[bucket_id], upper_weather)
         _buckets.sync_bucket_environment(bucket_id)
 
         exports.rig:notify(source, {
             header = "Weather",
-            message = locale("commands.weather_set", weather_type:upper(), bucket_id),
+            message = locale("commands.weather_set", upper_weather, bucket_id),
             type = "success",
             icon = "fa-solid fa-check-circle"
         })
 
-        log("info", locale("debug.admin_weather_changed", GetPlayerName(source), weather_type:upper(), bucket_id))
+        log("info", locale("debug.admin_weather_changed", GetPlayerName(source), upper_weather, bucket_id))
     end
 })
 
 exports.rig:register_command({
     name = "rig:settime",
     ace = { "rig.dev", "rig.admin" },
-    help = "Set time for a bucket",
+    help = "Set the in-game clock (hour and minute) for a routing bucket",
     params = {
-        { name = "hour", help = "Hour (0-23)" },
-        { name = "minute", help = "Minute (0-59)" },
-        { name = "bucket", help = "Bucket ID (optional)" }
+        { name = "hour", help = "Hour of the day (0-23)" },
+        { name = "minute", help = "Minute of the hour (0-59)" },
+        { name = "bucket", help = "(Optional) Routing bucket ID. Defaults to 0." }
     },
     handler = function(source, args, raw)
         local hour = tonumber(args[1])
@@ -83,7 +109,7 @@ exports.rig:register_command({
             exports.rig:notify(source, {
                 header = "Weather",
                 message = locale("commands.time_usage"),
-                type = "inform",
+                type = "info",
                 icon = "fa-solid fa-circle-info"
             })
             return
@@ -117,10 +143,10 @@ exports.rig:register_command({
 exports.rig:register_command({
     name = "rig:setseason",
     ace = { "rig.dev", "rig.admin" },
-    help = "Set season for a bucket",
+    help = "Set the current season for a routing bucket",
     params = {
-        { name = "season", help = "Season name" },
-        { name = "bucket", help = "Bucket ID (optional)" }
+        { name = "season", help = "Season name (winter, spring, summer, autumn)" },
+        { name = "bucket", help = "(Optional) Routing bucket ID. Defaults to 0." }
     },
     handler = function(source, args, raw)
         local season = args[1] and args[1]:upper() or nil
@@ -130,7 +156,7 @@ exports.rig:register_command({
             exports.rig:notify(source, {
                 header = "Weather",
                 message = locale("commands.season_usage"),
-                type = "inform",
+                type = "info",
                 icon = "fa-solid fa-circle-info"
             })
             return
@@ -161,10 +187,10 @@ exports.rig:register_command({
 exports.rig:register_command({
     name = "rig:setrain",
     ace = { "rig.dev", "rig.admin" },
-    help = "Set rain level (0.0-1.0)",
+    help = "Set rain intensity for a routing bucket",
     params = {
-        { name = "level", help = "Rain level 0.0-1.0" },
-        { name = "bucket", help = "Bucket ID (optional)" }
+        { name = "level", help = "Rain intensity (0.0 to 1.0)" },
+        { name = "bucket", help = "(Optional) Routing bucket ID. Defaults to 0." }
     },
     handler = function(source, args, raw)
         local level = tonumber(args[1])
@@ -174,13 +200,14 @@ exports.rig:register_command({
             exports.rig:notify(source, {
                 header = "Weather",
                 message = locale("commands.rain_usage"),
-                type = "inform",
+                type = "info",
                 icon = "fa-solid fa-circle-info"
             })
             return
         end
 
-        if not core.bucket_environments[bucket_id] then
+        local env = core.bucket_environments[bucket_id]
+        if not env then
             exports.rig:notify(source, {
                 header = "Weather",
                 message = locale("commands.bucket_not_found", bucket_id),
@@ -190,12 +217,22 @@ exports.rig:register_command({
             return
         end
 
-        core.bucket_environments[bucket_id].rain_level = level
+        if level > 0 and not supports_rain(env.weather) then
+            exports.rig:notify(source, {
+                header = "Weather",
+                message = locale("commands.rain_incompatible_weather", env.weather),
+                type = "error",
+                icon = "fa-solid fa-exclamation-triangle"
+            })
+            return
+        end
+
+        env.rain_level = level
         _buckets.sync_bucket_environment(bucket_id)
 
         exports.rig:notify(source, {
             header = "Weather",
-            message = locale("commands.rain_set", level, bucket_it),
+            message = locale("commands.rain_set", level, bucket_id),
             type = "success",
             icon = "fa-solid fa-check-circle"
         })
@@ -205,10 +242,10 @@ exports.rig:register_command({
 exports.rig:register_command({
     name = "rig:setsnow",
     ace = { "rig.dev", "rig.admin" },
-    help = "Set snow level (0.0-1.0)",
+    help = "Set snow accumulation level for a routing bucket",
     params = {
-        { name = "level", help = "Snow level 0.0-1.0" },
-        { name = "bucket", help = "Bucket ID (optional)" }
+        { name = "level", help = "Snow level (0.0 to 1.0)" },
+        { name = "bucket", help = "(Optional) Routing bucket ID. Defaults to 0." }
     },
     handler = function(source, args, raw)
         local level = tonumber(args[1])
@@ -217,14 +254,15 @@ exports.rig:register_command({
         if not level or level < 0 or level > 1 then
             exports.rig:notify(source, {
                 header = "Weather",
-                message = "Usage: /rig:setsnow <0.0-1.0> [bucket]",
-                type = "inform",
+                message = locale("commands.snow_usage"),
+                type = "info",
                 icon = "fa-solid fa-circle-info"
             })
             return
         end
 
-        if not core.bucket_environments[bucket_id] then
+        local env = core.bucket_environments[bucket_id]
+        if not env then
             exports.rig:notify(source, {
                 header = "Weather",
                 message = locale("commands.bucket_not_found", bucket_id),
@@ -234,7 +272,17 @@ exports.rig:register_command({
             return
         end
 
-        core.bucket_environments[bucket_id].snow_level = level
+        if level > 0 and not supports_snow(env.weather) then
+            exports.rig:notify(source, {
+                header = "Weather",
+                message = locale("commands.snow_incompatible_weather", env.weather),
+                type = "error",
+                icon = "fa-solid fa-exclamation-triangle"
+            })
+            return
+        end
+
+        env.snow_level = level
         _buckets.sync_bucket_environment(bucket_id)
 
         exports.rig:notify(source, {
@@ -249,10 +297,10 @@ exports.rig:register_command({
 exports.rig:register_command({
     name = "rig:setwind",
     ace = { "rig.dev", "rig.admin" },
-    help = "Set wind speed",
+    help = "Set wind speed for a routing bucket",
     params = {
-        { name = "speed", help = "Wind speed" },
-        { name = "bucket", help = "Bucket ID (optional)" }
+        { name = "speed", help = "Wind speed value (0 or higher)" },
+        { name = "bucket", help = "(Optional) Routing bucket ID. Defaults to 0." }
     },
     handler = function(source, args, raw)
         local speed = tonumber(args[1])
@@ -261,8 +309,8 @@ exports.rig:register_command({
         if not speed or speed < 0 then
             exports.rig:notify(source, {
                 header = "Weather",
-                message = locales("commands.wind_usage"),
-                type = "inform",
+                message = locale("commands.wind_usage"),
+                type = "info",
                 icon = "fa-solid fa-circle-info"
             })
             return
@@ -295,9 +343,9 @@ exports.rig:register_command({
 exports.rig:register_command({
     name = "rig:freeze",
     ace = { "rig.dev", "rig.admin" },
-    help = "Freeze/unfreeze weather for a bucket",
+    help = "Freeze or unfreeze automated weather progression for a routing bucket",
     params = {
-        { name = "bucket", help = "Bucket ID (optional)" }
+        { name = "bucket", help = "(Optional) Routing bucket ID. Defaults to 0." }
     },
     handler = function(source, args, raw)
         local bucket_id = _buckets.get_bucket_id(args[1] or 0)
@@ -329,22 +377,22 @@ exports.rig:register_command({
 exports.rig:register_command({
     name = "rig:dynamic",
     ace = { "rig.dev", "rig.admin" },
-    help = "Toggle dynamic weather or time",
+    help = "Toggle dynamic weather or time cycles on or off for a routing bucket",
     params = {
-        { name = "mode", help = "weather | time" },
-        { name = "state", help = "on | off" },
-        { name = "bucket", help = "Bucket ID (optional)" }
+        { name = "mode", help = "Target cycle mode: 'weather' or 'time'" },
+        { name = "state", help = "State setting: 'on' or 'off'" },
+        { name = "bucket", help = "(Optional) Routing bucket ID. Defaults to 0." }
     },
     handler = function(source, args, raw)
-        local mode = args[1]
-        local state = args[2]
+        local mode = args[1] and args[1]:lower() or nil
+        local state = args[2] and args[2]:lower() or nil
         local bucket_id = _buckets.get_bucket_id(args[3] or 0)
 
         if not mode or not state or (mode ~= "weather" and mode ~= "time") or (state ~= "on" and state ~= "off") then
             exports.rig:notify(source, {
                 header = "Weather",
                 message = locale("commands.dynamic_usage"),
-                type = "inform",
+                type = "info",
                 icon = "fa-solid fa-circle-info"
             })
             return
